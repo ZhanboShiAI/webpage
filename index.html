@@ -51,94 +51,76 @@
             font-style: italic;
             color: #555;
         }
+        #pdf-container canvas {
+            /* 让 canvas 宽度适应容器，高度自动缩放 */
+            width: 100%;
+            height: auto;
+            /* margin-bottom: 20px; */
+            /* 添加一个细微的边框，使其看起来更像一页纸 */
+            /* border: 1px solid #e0e0e0; */
+            /* box-sizing: border-box; */
+        }
     </style>
 </head>
 <body>
-    <h2>2.3 各研究内容的具体技术路线</h2>
-    <p>图1展示了本项目总体技术路线。各项研究内容的具体技术方案描述如下。</p>
-    <figure>
-        <img src="./statics/imgs/fig1.png">
-        <figcaption>图1：本项目总体技术路线。</figcaption>
-    </figure>
+    <h2>“面向大范围未知场景的多智能体协同定位与联合稠密建图”项目的技术路线详细版本</h2>
+    <div id="pdf-container"></div>
 
-    <h3>（1）跨模态数据关联</h3>
-    <p>
-        本项目提出了一种模态逼近引导的图像-点云相对位姿多层级估计模型（后文简称位姿估计模型）。图像-点云位姿估计任务主要面临两大难题：1）由于图像和点云的模态差异，导致跨模态特征提取难度大；2）传感器的感知范围不同，加上数据密度有差异，使得2D-3D匹配的质量欠佳。为了解决这些问题，位姿估计模型通过图像深度估计和点云体素化，令两种模态相互逼近，有效地消解了图像和点云在几何结构信息获取和特征空间上的差异，进而提取表征能力强的跨模态特征。此外，位姿估计模型还融入了“区-块-点”匹配策略。该策略按照逐步缩小匹配区域的思路来确定匹配的2D像素和3D点，大幅提升了2D-3D匹配的质量。课题组提出的图像-点云相对位姿多层级估计模型网络架构如图2所示。该网络将一对共视的相机RGB图像和激光雷达点云作为输入，采用多层匹配的方式确定匹配的像素-点云点对，最终输出激光雷达和相机之间的相对位姿。
-    </p>
-    <figure>
-        <img src="./statics/imgs/fig2.png">
-        <figcaption>图2：本项目提出的模态逼近引导的图像-点云相对位姿多层级估计模型的运行管线。</figcaption>
-    </figure>
-    <p>
-        给定一对图像 $\mathbf{I} \in \mathbb{R}^{W \times H \times 3}$ 和点云 $\mathbf{P} \in \mathbb{R}^{N \times 3}$
-    </p>
-    <h3>$\cdot$ 模型概述</h3>
-    <p>
-        如图2所示，为了构建精准的2D-3D对应关系，位姿估计模型采用了“逼近-融合-匹配”的架构，主要由模态逼近模块和“区-块-点”匹配策略构成。模型运行时，首先借助图像深度估计和点云体素化消除图像和点云之间的模态差异。通过图像深度估计，图像也能获取与点云类似的场景几何结构信息；点云体素化则让图像和点云可以采用相同的特征提取方式，这为后续处理奠定了基础。随后，模型使用注意力机制对齐特征空间，进一步强化所提取的跨模态特征的表征能力。最后，基于对齐后的跨模态特征，“区-块-点”匹配策略按照逐步缩小匹配范围的方式，建立起2D像素与3D点之间的对应关系，从而实现精准匹配。
-    </p>
-    <h3>$\cdot$ 模态逼近</h3>
-    <figure>
-        <img src="./statics/imgs/fig3.png">
-        <figcaption>图3：区-块-点匹配策略工作管线示意图。</figcaption>
-    </figure>
-    <h3>$\cdot$ 区-块-点匹配策略</h3>
+    <script src="./statics/pdf/pdf.min.js"></script>
+    <script>
+        // 指定 PDF.js worker 文件的路径
+        pdfjsLib.GlobalWorkerOptions.workerSrc = './statics/pdf/pdf.worker.min.js';
 
-    <h3>（2）大规模多源位姿图的数据关联筛选与分段并行求解管线</h2>
-    <p>
-        本项目拟基于跨模态数据关联构建全局位姿图，随后进行四自由度位姿图优化以完成关键帧位姿调整。受限于数据关联算法的局限性，原始数据关联组中往往会存在错误或不精确的异常关联。此外，在多智能体系统中，全局位姿图的规模一般都比较大。如果直接采用非线性优化的方式进行位姿解算，往往无法满足实时性需求。针对上述两方面的问题，在协同定位的过程中，我们首先借助四自由度成对一致性检测来筛选数据关联，将其中的异常数据关联剔除出去，以此保障协同定位的鲁棒性。随后，运用分治法的思想，把全局位姿图求解任务进行拆解，通过分段并行求解的方式，实现快速且精准的位姿图优化求解。
-    </p>
-    <figure>
-        <img src="./statics/imgs/fig4.png" width="70%">
-        <figcaption>图4：两阶段位姿图分段求解算法示意图。</figcaption>
-    </figure>
+        // PDF 文件路径
+        const url = './statics/pdf/appendix.pdf';
 
-    <h3>（3）多模态表征的稠密地图构建</h2>
-    <p>
-        本项目提出了几何、语义和外观信息统一的体素高斯地图表征模型。该方案结合了点云的离散扩展性和神经辐射场的可微优化性，将地图表征为一组不同粒度的体素高斯椭球，可以快速优化不同模态的信息，以构建全局一致的稠密地图。当获得了各异构传感器的相对位姿和智能体的全局位姿后，先利用LiDAR点云初始化八叉树体素地图，然后在不同体素内部构建三维高斯椭球。这种由粗粒度到细粒度的地图构建方式允许我们快速优化地图信息，并可以在体素层面进行无效信息的剪枝，在高斯椭球层面精细优化感兴趣区域，从而在增量式重建过程中自适应地滤除冗余信息，有效防止地图内存占用过高。课题组所提出的体素高斯地图表征模型的架构如图5所示。
-    </p>
-    <figure>
-        <img src="./statics/imgs/fig5.png">
-        <figcaption>图 5：本项目提出的体素高斯地图表征模型的架构图。</figcaption>
-    </figure>
+        // 获取用于展示 PDF 的容器
+        const container = document.getElementById('pdf-container');
 
-    <h3>（4）基础模型驱动的多智能体局部信息共享和全局统筹决策框架</h3>
-    <p>
-        本项目提出了基础模型驱动的多智能体全局运动规划策略，如图6所示。该策略首先于边缘智能体节点识别关键视觉观测帧，并提取该帧中的视觉特征点。随后，该策略凭借当前关键帧中视觉特征点与历史关键帧中对应视觉特征点的关联关系压缩待传输的特征信息。通过上述两个步骤，该策略能够降低多智能体间信息共享的频率与数据量，从而在带宽受限的情况下实现高效可靠的协作感知。在接收到边缘智能体传输的局部特征信息后，中央智能体节点迭代更新全局地图，借助基础模型的强大推理能力判断全局稠密重建任务的完成程度，并选择性地调整边缘智能体节点的探索任务，从而实现多智能体系统全局任务的实时重决策。同时，边缘智能体节点接收来自中央智能体节点分配的探索任务，在局部区域规划行进路径，并依赖多源传感信息实现动态物体检测与主动避障，进一步提高了未知环境下多智能体协同运动规划的鲁棒性。
-    </p>
-    <figure>
-        <img src="./statics/imgs/fig6.png">
-        <figcaption>图6：基础模型驱动的多智能体全局运动规划策略架构图。</figcaption>
-    </figure>
+        // 异步加载 PDF
+        pdfjsLib.getDocument(url).promise.then(function(pdf) {
+            console.log('PDF loaded');
+            
+            // 循环遍历每一页
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                pdf.getPage(pageNum).then(function(page) {
+                    console.log('Page ' + pageNum + ' loaded');
+                    
+                    // 获取设备的像素比，用于高分屏适配
+                    const devicePixelRatio = window.devicePixelRatio || 1;
+                    // 定义一个基础缩放比例，可以根据需要调整以获得更清晰的效果
+                    const baseScale = 2.5;
+                    // 最终的渲染缩放比例
+                    const scale = baseScale * devicePixelRatio;
 
-    <!-- <h1>一级标题：关于欧拉公式</h1>
-    <p>这是一个一级标题，通常用于页面的主要标题。</p>
+                    const viewport = page.getViewport({ scale: scale });
 
-    <h2>二级标题：公式的介绍</h2>
-    <p>这是一个二级标题，用于划分主要内容区域。</p>
+                    // 创建 canvas 元素
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
 
-    <h3>三级标题：公式的组成部分</h3>
-    <p>这是一个三级标题，用于更细致地划分内容。</p>
+                    // 设置 canvas 的实际尺寸（画布大小），使用渲染后的高分辨率
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-    <figure>
-        <img src="./statics/imgs/fig1.png" alt="欧拉恒等式">
-        <figcaption>图 1: 著名的欧拉恒等式</figcaption>
-    </figure>
+                    // CSS 样式已在 <style> 标签中定义，这里不再需要设置 style
 
-    <h2>二级标题：公式的展示</h2>
-    
-    <h3>行内公式</h3>
-    <p>
-        欧拉公式的形式为 $e^{i\pi} + 1 = 0$。这个简洁的公式连接了数学中五个最重要的常数：$0$ (加法单位元), $1$ (乘法单位元), $e$ (自然对数的底), $i$ (虚数单位), 和 $\pi$ (圆周率)。
-    </p>
+                    // 将 canvas 添加到容器中
+                    container.appendChild(canvas);
 
-    <h3>行间公式</h3>
-    <p>
-        更一般的欧拉公式形式如下，它描述了复指数函数与三角函数之间的关系：
-    </p>
-    $$ e^{ix} = \cos(x) + i\sin(x) $$
-    <p>
-        这个公式在复分析和工程领域中有着广泛的应用。
-    </p> -->
+                    // 渲染页面到 canvas
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                });
+            }
+        }, function (reason) {
+            // PDF 加载失败
+            console.error(reason);
+        });
+    </script>
 
 </body>
 </html>
